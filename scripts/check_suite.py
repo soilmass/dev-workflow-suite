@@ -84,8 +84,9 @@ def check_skill(root, name, k, c, results):
     res(heads == c["required_sections"], "SKL-06", "required sections present, in order")
 
     reads = secs.get("## Reads", "")
-    res(".suite/record.md" in reads or k["kind"] == "tool" and all(r in reads for r in k["reads"]),
-        "SKL-07", "Reads names the record first")
+    first = re.search(r"`([^`]+)`", reads)
+    res(bool(first) and first.group(1) == k["reads"][0], "SKL-07",
+        f"Reads names '{k['reads'][0]}' first")
     missing_reads = [r for r in k["reads"] if r not in reads]
     res(not missing_reads, "SKL-07", f"Reads lists every contract input{': missing ' + ', '.join(missing_reads) if missing_reads else ''}")
 
@@ -107,6 +108,9 @@ def check_skill(root, name, k, c, results):
     rmiss = [r for r in list(k.get("must", {})) + list(k.get("must_not", {})) if r not in rules]
     res(not rmiss, "SKL-10", "Rules cite every must and must-not" + (f" (missing {rmiss})" if rmiss else ""))
     res(MARKER in text, "SKL-11", "embeds the shared core")
+    common = [i for i in c.get("common", {}) if not (i == "CORE-M2" and k["kind"] == "tool")]
+    cmiss = [i for i in common if i not in rules]
+    res(not cmiss, "SKL-16", "Rules cite every common rule" + (f" (missing {cmiss})" if cmiss else ""))
 
     lmiss = [m for m in k.get("library", []) if not (d / "references" / "library" / f"{m}.md").is_file()]
     res(not lmiss, "SKL-13", "library modules present in references/library/" + (f" (missing {lmiss})" if lmiss else ""))

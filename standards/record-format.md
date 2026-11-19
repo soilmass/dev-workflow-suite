@@ -34,7 +34,7 @@ not_applicable:          # optional
 ---
 ```
 
-The gate log is a table under `## Gate log` with columns Date (ISO), Stage, Result (`passed` or `blocked`), Notes.
+The gate log is a table under `## Gate log` with columns Date (ISO), Stage, Result (`passed` or `blocked`), Notes. A stage that passes its gate appends its row and sets the header `stage` to the next stage (CORE-M2); REC-06 checks the two agree.
 
 ## IDs
 
@@ -54,3 +54,5 @@ A row's first cell holds its ID: `OUT-n`, `NEED-n`, `QUAL-n`, `DOD-n`, `ITEM-n`,
 | REC-08 | `rules.md` MUST name the library version, and each rule MUST hold exactly one UPPERCASE keyword. |
 | REC-09 | Every THR MUST have one response: mitigate, eliminate, transfer or accept. |
 | REC-10 | Every FIND MUST carry a CWE ID. |
+| REC-11 | Every DOD MUST trace to a defined OUT. |
+| REC-12 | Every ITEM MUST carry one status: open, passed, blocked or waived. |

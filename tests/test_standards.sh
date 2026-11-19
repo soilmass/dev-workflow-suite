@@ -21,6 +21,8 @@ broken; sed -i 's/^profile: standard/profile: huge/' "$tmp/r/.suite/record.md"; 
 broken; printf '| OUT-1 | dup | x | y |\n' >> "$tmp/r/.suite/plan.md"; expect_fail "duplicate ID (REC-03)"
 broken; printf '\n| THR-1 | ingress | flood | |\n' >> "$tmp/r/.suite/plan.md"; expect_fail "threat without response (REC-09)"
 broken; rm "$tmp/r/.suite/shape.md"; expect_fail "missing stage file (REC-02)"
+broken; sed -i 's/| OUT-1 |$/| OUT-5 |/' "$tmp/r/.suite/plan.md"; expect_fail "orphan DOD (REC-11)"
+broken; printf '\n| ITEM-1 | scaffold | maybe |\n' >> "$tmp/r/.suite/plan.md"; expect_fail "item without status (REC-12)"
 
 # --- skill checker ---
 mk() {  # a repo copy with one skill folder named $1 built from the contract
@@ -50,7 +52,7 @@ metadata:
 ADOPT-G1 ADOPT-G2 ADOPT-G3
 
 ## Rules for this skill
-ADOPT-M1 ADOPT-N1 ADOPT-N2
+ADOPT-M1 ADOPT-N1 ADOPT-N2 CORE-M1 CORE-N1 CORE-N2 CORE-N3
 
 <!-- shared-standard:begin -->
 <!-- shared-standard:end -->
@@ -63,6 +65,8 @@ mk adopt; $cs >/dev/null || { $cs | grep FAIL; fail "conforming skill rejected";
 mk adopt; sed -i 's/ADOPT-N2//' "$tmp/s/plugins/p/skills/adopt/SKILL.md"; if $cs >/dev/null; then fail "missing must-not ID passed (SKL-10)"; fi
 mk adopt; sed -i 's#`docs/decisions/`#`docs/decisions/` and `.suite/plan.md`#' "$tmp/s/plugins/p/skills/adopt/SKILL.md"; if $cs >/dev/null; then fail "writing another stage's file passed (SKL-08)"; fi
 mk adopt; sed -i 's/^## Steps/## How/' "$tmp/s/plugins/p/skills/adopt/SKILL.md"; if $cs >/dev/null; then fail "missing section passed (SKL-06)"; fi
+mk adopt; sed -i 's/ CORE-N1//' "$tmp/s/plugins/p/skills/adopt/SKILL.md"; if $cs >/dev/null; then fail "missing common rule passed (SKL-16)"; fi
+mk adopt; sed -i 's#^`.suite/record.md`, `.suite/rules.md`#`.suite/rules.md`, `.suite/record.md`#' "$tmp/s/plugins/p/skills/adopt/SKILL.md"; if $cs >/dev/null; then fail "record not read first passed (SKL-07)"; fi
 mk adopt; rm "$tmp/s/evals/adopt/evals.md"; if $cs >/dev/null; then fail "missing evals passed (SKL-14)"; fi
 mk adopt; mkdir -p "$tmp/s/plugins/p/skills/adopt-or-build"; printf -- '---\nname: adopt-or-build\ndescription: x\n---\n' > "$tmp/s/plugins/p/skills/adopt-or-build/SKILL.md"
 if $cs >/dev/null; then fail "legacy skill kept after its replacement passed (SKL-15)"; fi

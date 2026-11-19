@@ -88,7 +88,7 @@ def main(root):
     check("REC-02", not missing, "every stage before the current one has its file" + (f" (missing {missing})" if missing else ""))
 
     # IDs
-    defined, dupes, need_rows, thr_rows, find_rows = {}, [], [], [], []
+    defined, dupes, need_rows, thr_rows, find_rows, dod_rows, item_rows = {}, [], [], [], [], [], []
     for f in sorted(s.rglob("*.md")):
         for r in rows(f.read_text(encoding="utf-8")):
             if r and ID_RE.match(r[0]):
@@ -96,10 +96,15 @@ def main(root):
                     dupes.append(f"{r[0]} ({f.name} and {defined[r[0]]})")
                 defined.setdefault(r[0], f.name)
                 kind = r[0].split("-")[0]
-                {"NEED": need_rows, "THR": thr_rows, "FIND": find_rows}.get(kind, []).append(r)
+                {"NEED": need_rows, "THR": thr_rows, "FIND": find_rows, "DOD": dod_rows, "ITEM": item_rows}.get(kind, []).append(r)
     check("REC-03", not dupes, "IDs are unique across the record" + (f" (duplicates: {dupes})" if dupes else ""))
     orphan = [r[0] for r in need_rows if not any(o in defined for o in re.findall(r"OUT-\d+", " ".join(r[1:])))]
     check("REC-04", not orphan, "every NEED traces to a defined OUT" + (f" (orphans: {orphan})" if orphan else ""))
+    dorph = [r[0] for r in dod_rows if not any(o in defined for o in re.findall(r"OUT-\d+", " ".join(r[1:])))]
+    check("REC-11", not dorph, "every DOD traces to a defined OUT" + (f" (orphans: {dorph})" if dorph else ""))
+    badst = [r[0] for r in item_rows if not {"open", "passed", "blocked", "waived"} & {c.lower() for c in r[1:]}]
+    check("REC-12", not badst, "every ITEM has a status: open, passed, blocked or waived"
+          + (f" (missing: {badst})" if badst else ""))
     noresp = [r[0] for r in thr_rows if not RESPONSES & {c.lower() for c in r[1:]}]
     check("REC-09", not noresp, "every THR has one response: mitigate, eliminate, transfer or accept"
           + (f" (missing: {noresp})" if noresp else ""))
