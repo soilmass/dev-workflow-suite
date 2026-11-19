@@ -1,7 +1,7 @@
 ---
 name: standards-baseline
 description: Writes the baseline repository, supply-chain, delivery, observability, policy, licensing and agent-safety rules into a software project's Project File, drawn from OpenSSF, SLSA, CISA, OpenGitOps, OpenTelemetry and OWASP. Use when setting up the standards for a new software project, or when a Project File lacks baseline rules.
-license: Apache-2.0
+license: CC-BY-4.0
 metadata:
   suite: dev-workflow
   wave: "1"
