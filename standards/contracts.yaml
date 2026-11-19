@@ -26,14 +26,8 @@ required_sections:
   - "## Exit gate"
   - "## Rules for this skill"
 
-# Why the suite exists: its outcomes (from the Vision Map). Every outcome is
-# served by at least one skill (SKL-17).
-outcomes:
-  OUT-1: Projects meet one shared baseline.
-  OUT-2: Projects reach production-grade health (Scorecard 7.0 or higher).
-  OUT-3: Teams stay on the path instead of bypassing it.
-  OUT-4: Proven open source is adopted before anything is built.
-  OUT-5: Teams outside yours use it.
+# Why the suite exists: its outcomes are the OUT rows of the suite's own
+# record, .suite/shape.md. Every outcome is served by at least one skill (SKL-17).
 
 # The rebuild plan's principles, each enforced by at least one existing rule
 # (SKL-18). A principle still marked proposed reports PENDING, not FAIL.
@@ -41,13 +35,19 @@ principles:
   P1: {name: "The workflow is the product; skills are its stages", status: accepted, enforced_by: [SKL-12, SKL-15]}
   P2: {name: "Software only", status: accepted, enforced_by: [SKL-19]}
   P3: {name: "One record, in the repository", status: accepted, enforced_by: [SKL-07, SKL-08, REC-01, REC-03]}
-  P4: {name: "One gate", status: accepted, enforced_by: [SKL-09, CORE-M2, REC-05, REC-06]}
+  P4: {name: "One gate", status: accepted, enforced_by: [SKL-09, CORE-M2, REC-05, REC-06, REC-13]}
   P5: {name: "Standards are a library, not research", status: accepted, enforced_by: [PLAN-M1, PLAN-N1, SKL-13, REC-08]}
   P6: {name: "Adopt before build, everywhere", status: accepted, enforced_by: [DESIGN-M1, DESIGN-G5, ADOPT-G1]}
-  P7: {name: "Scale to the project", status: accepted, enforced_by: [REC-01]}
+  P7: {name: "Scale to the project", status: accepted, enforced_by: [REC-01, SKL-20]}
   P8: {name: "Decide, don't drift", status: accepted, enforced_by: [FRAME-N1, PLAN-M3, BUILD-M3, SUITE-M2]}
   P9: {name: "Machines enforce, prose explains", status: proposed, enforced_by: [BUILD-G2, BUILD-M2]}
   P10: {name: "Works in both places", status: proposed, enforced_by: []}
+
+# Three ID spaces that never share a prefix (SKL-21).
+id_spaces:
+  library: [SEC, CI, SUP, DEL, OBS, POL, LIC, APP, AGT]
+  record: [OUT, NEED, QUAL, DOD, ITEM, THR, FIND, INC]
+  suite: [CORE, SKL, REC]   # plus one prefix per skill: the skill name in capitals
 
 # One vocabulary (P3). Contract skills must not use the words under avoid (SKL-19).
 glossary:
@@ -146,6 +146,9 @@ skills:
       SHAPE-G3: Every relevant ISO 25010 quality has a scenario (QUAL) with a measurable response.
       SHAPE-G4: Failure, misuse and overload scenarios exist.
       SHAPE-G5: The record validator passes on shape.md.
+    profile_variants:
+      SHAPE-G3: {small: "The three most important qualities have scenarios."}
+      SHAPE-G4: {small: "At least one failure scenario exists.", critical: "Failure, misuse and overload scenarios exist for every primary role."}
     must:
       SHAPE-M1: Mark every drafted item proposed until the user accepts it.
       SHAPE-M2: Split any need that holds two behaviours.
@@ -165,6 +168,8 @@ skills:
       PLAN-G2: rules.md lists the library version and every selected rule with its ID unchanged.
       PLAN-G3: Every library rule left out has a reason.
       PLAN-G4: No proposed decision affects a DoD item.
+    profile_variants:
+      PLAN-G2: {small: "rules.md selects OSPS Baseline level 1.", standard: "rules.md selects OSPS Baseline level 2.", critical: "rules.md selects OSPS Baseline level 3."}
     must:
       PLAN-M1: Select rules from the library before any research.
       PLAN-M2: Research only gaps the library does not cover, and send each gap to the standards tool.
@@ -186,6 +191,9 @@ skills:
       DESIGN-G3: Every threat (THR) has one response, and every accepted risk quotes the user.
       DESIGN-G4: A test strategy names the test levels and what each covers.
       DESIGN-G5: Every new dependency has an adopt record.
+    profile_variants:
+      DESIGN-G2: {small: "A context diagram exists and names every external system."}
+      DESIGN-G3: {small: "A short threat list (up to 5) has one response each.", critical: "Every element and boundary-crossing flow has a STRIDE pass, and a second person reviewed the threat model."}
     must:
       DESIGN-M1: Send every new dependency to the adopt tool.
       DESIGN-M2: Supersede an accepted decision with a new record instead of editing it.
@@ -226,6 +234,9 @@ skills:
       VERIFY-G2: Every threat response from design is confirmed implemented or raised as a finding.
       VERIFY-G3: Every critical or high finding is fixed or has an accepted risk decision.
       VERIFY-G4: The test strategy's levels all run in CI.
+    profile_variants:
+      VERIFY-G2: {small: "Every threat in the short list is confirmed handled or raised as a finding, and automated scans (static analysis, dependency audit) ran."}
+      VERIFY-G3: {critical: "Every critical, high or medium finding is fixed or has an accepted risk decision, and someone other than the author reviewed the findings."}
     must:
       VERIFY-M1: Cite ASVS requirements by ID only.
       VERIFY-M2: Mark a finding resolved only with evidence (a test, a diff or a CI result).
@@ -248,6 +259,8 @@ skills:
       RELEASE-G4: User docs (README, API docs) match the release.
       RELEASE-G5: Deployed config references the release by version or digest.
       RELEASE-G6: An SBOM ships with the release wherever rules.md requires one.
+    profile_variants:
+      RELEASE-G3: {small: "The artefact signature verifies.", critical: "The signature verifies and provenance meets SLSA Build L3."}
     must:
       RELEASE-M1: Verify signature and provenance with the tools before reporting success.
     must_not:
@@ -266,6 +279,8 @@ skills:
       OPERATE-G2: Every SLO has an alert and a runbook.
       OPERATE-G3: A vulnerability routine names how advisories reach the team and the fix time per severity.
       OPERATE-G4: Every incident (INC) has a report with a cause and an action.
+    profile_variants:
+      OPERATE-G1: {small: "One availability SLO covers the main user path."}
     must:
       OPERATE-M1: Emit telemetry through OpenTelemetry.
     must_not:

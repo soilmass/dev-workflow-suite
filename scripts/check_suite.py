@@ -32,8 +32,24 @@ def sections(text):
     return out
 
 
-def check_contracts(c, results):
+def suite_outcomes(root):
+    """OUT IDs from the suite's own record (.suite/shape.md)."""
+    f = root / ".suite" / "shape.md"
+    if not f.is_file():
+        return {}
+    out = {}
+    for line in f.read_text(encoding="utf-8").splitlines():
+        m = re.match(r"^\|\s*(OUT-\d+)\s*\|\s*([^|]+)\|", line)
+        if m:
+            out[m.group(1)] = m.group(2).strip()
+    return out
+
+
+def check_contracts(c, results, root):
     names = c["skills"]
+    outcomes = suite_outcomes(root)
+    if not outcomes:
+        results.append(("FAIL", "SKL-17", ".suite/shape.md", "the suite's own record defines no outcomes"))
     stage_writes = {}
     for name, k in names.items():
         if k["kind"] not in ("stage", "tool"):
@@ -60,17 +76,17 @@ def check_contracts(c, results):
                 results.append(("FAIL", "SKL-12", name, f"rule ID {i} does not follow {prefix}G/M/N<n>"))
     # SKL-17: every outcome served; every served outcome exists
     served = {o for k in names.values() for o in k.get("serves", [])}
-    for o in c.get("outcomes", {}):
+    for o in outcomes:
         if o not in served:
             results.append(("FAIL", "SKL-17", "contracts.yaml", f"outcome {o} is served by no skill"))
     for n, k in names.items():
         if not k.get("serves"):
             results.append(("FAIL", "SKL-17", n, "skill serves no outcome"))
         for o in k.get("serves", []):
-            if o not in c.get("outcomes", {}):
+            if o not in outcomes:
                 results.append(("FAIL", "SKL-17", n, f"serves unknown outcome {o}"))
     # SKL-18: every principle enforced by rules that exist
-    known = set(c.get("common", {})) | {f"SKL-{i:02d}" for i in range(1, 20)} | {f"REC-{i:02d}" for i in range(1, 13)}
+    known = set(c.get("common", {})) | {f"SKL-{i:02d}" for i in range(1, 22)} | {f"REC-{i:02d}" for i in range(1, 14)}
     for k in names.values():
         known |= set(k["gate"]) | set(k.get("must", {})) | set(k.get("must_not", {}))
     for pid, pr in c.get("principles", {}).items():
@@ -81,6 +97,24 @@ def check_contracts(c, results):
             results.append(("PENDING", "SKL-18", pid, f"'{pr['name']}' is {pr.get('status')} or has no enforcing rule yet"))
         else:
             results.append(("PASS", "SKL-18", pid, f"'{pr['name']}' enforced by {', '.join(pr['enforced_by'])}"))
+    # SKL-20: profile variants name real gates and real profiles
+    for n, k in names.items():
+        for g, v in (k.get("profile_variants") or {}).items():
+            if g not in k["gate"]:
+                results.append(("FAIL", "SKL-20", n, f"profile variant for unknown gate {g}"))
+            bad = [p for p in v if p not in c["profiles"]]
+            if bad:
+                results.append(("FAIL", "SKL-20", n, f"{g}: unknown profiles {bad}"))
+    # SKL-21: the three ID spaces share no prefix
+    sp = c.get("id_spaces", {})
+    spaces = {"library": set(sp.get("library", [])), "record": set(sp.get("record", [])),
+              "suite": set(sp.get("suite", [])) | {n.upper() for n in names}}
+    seen = {}
+    for space, prefixes in spaces.items():
+        for pre in prefixes:
+            if pre in seen:
+                results.append(("FAIL", "SKL-21", "contracts.yaml", f"prefix {pre} is in both {seen[pre]} and {space}"))
+            seen[pre] = space
     if not any(r[0] == "FAIL" for r in results):
         results.append(("PASS", "SKL-12", "contracts.yaml", f"{len(names)} contracts consistent"))
 
@@ -127,6 +161,10 @@ def check_skill(root, name, k, c, results):
     if k["kind"] == "stage":
         res(k["next"] in gate, "SKL-09", f"Exit gate names the next skill '{k['next']}'")
 
+    pv = k.get("profile_variants") or {}
+    vmiss = sorted({p for v in pv.values() for p in v if p not in gate})
+    res(not vmiss, "SKL-20", "Exit gate states each profile variant" + (f" (no mention of {vmiss})" if vmiss else ""))
+
     rules = secs.get("## Rules for this skill", "")
     rmiss = [r for r in list(k.get("must", {})) + list(k.get("must_not", {})) if r not in rules]
     res(not rmiss, "SKL-10", "Rules cite every must and must-not" + (f" (missing {rmiss})" if rmiss else ""))
@@ -158,7 +196,7 @@ def main():
     root = args.root.resolve()
     c = yaml.safe_load((root / "standards" / "contracts.yaml").read_text(encoding="utf-8"))
     results = []
-    check_contracts(c, results)
+    check_contracts(c, results, root)
 
     present = {p.parent.name for p in root.glob("plugins/*/skills/*/SKILL.md")}
     for name, k in c["skills"].items():

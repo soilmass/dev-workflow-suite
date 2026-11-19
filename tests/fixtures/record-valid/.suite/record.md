@@ -2,6 +2,7 @@
 name: pingboard
 profile: standard
 stage: design
+version: 1
 library: v1.0.0
 not_applicable: {}
 ---
@@ -9,11 +10,11 @@ not_applicable: {}
 
 ## Gate log
 
-| Date | Stage | Result | Notes |
-| --- | --- | --- | --- |
-| 2026-11-18 | frame | passed | |
-| 2026-11-18 | shape | passed | |
-| 2026-11-18 | plan | passed | |
+| Date | Version | Stage | Result | Notes |
+| --- | --- | --- | --- | --- |
+| 2026-11-18 | 1 | frame | passed | |
+| 2026-11-18 | 1 | shape | passed | |
+| 2026-11-18 | 1 | plan | passed | |
 
 ## Parking lot
 

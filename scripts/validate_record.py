@@ -64,24 +64,35 @@ def main(root):
     check("REC-01", all(k in STAGES and str(v).strip() for k, v in na.items()),
           "every not-applicable stage gives a reason")
 
-    # gate log
+    # gate log: Date | Version | Stage | Result | Notes
+    version = h.get("version")
+    check("REC-13", isinstance(version, int) and version >= 1, "header version is a whole number from 1")
     gates = [r for r in rows(rtext.split("## Gate log", 1)[1].split("\n## ", 1)[0])] if "## Gate log" in rtext else []
     gates = [g for g in gates if g and g[0].lower() != "date"]
     bad = []
     for g in gates:
         try:
             datetime.date.fromisoformat(g[0])
-            ok = g[1] in STAGES and g[2] in ("passed", "blocked")
+            ok = int(g[1]) >= 1 and g[2] in STAGES and g[3] in ("passed", "blocked")
         except (ValueError, IndexError):
             ok = False
         if not ok:
             bad.append(" | ".join(g))
-    check("REC-05", "## Gate log" in rtext and not bad, "gate log rows have an ISO date, a stage and passed or blocked"
-          + (f" (bad: {bad})" if bad else ""))
-
-    passed = {g[1] for g in gates if len(g) > 2 and g[2] == "passed"}
-    expected = next((st for st in STAGES if st not in passed and st not in na), "done")
-    check("REC-06", stage == expected, f"header stage '{stage}' is the first stage without a passed gate ('{expected}')")
+    check("REC-05", "## Gate log" in rtext and not bad,
+          "gate log rows have an ISO date, a version, a stage and passed or blocked" + (f" (bad: {bad})" if bad else ""))
+    good = [g for g in gates if " | ".join(g) not in bad]
+    if isinstance(version, int):
+        ahead = [g for g in good if int(g[1]) > version]
+        prev_learn = version == 1 or any(int(g[1]) == version - 1 and g[2] == "learn" and g[3] == "passed" for g in good)
+        check("REC-13", not ahead and prev_learn,
+              "no gate row is ahead of the header version, and each new version follows a passed learn"
+              + (f" (ahead: {len(ahead)})" if ahead else "") + ("" if prev_learn else f" (no passed learn for version {version - 1})"))
+    cur = version if isinstance(version, int) else 1
+    passed = {g[2] for g in good if int(g[1]) == cur and g[3] == "passed"}
+    cycle = STAGES if cur == 1 else STAGES[STAGES.index("plan"):]
+    expected = next((st for st in cycle if st not in passed and st not in na), "done")
+    check("REC-06", stage == expected,
+          f"header stage '{stage}' is the first stage of version {cur} without a passed gate ('{expected}')")
 
     before = STAGES[:STAGES.index(stage)] if stage in STAGES else STAGES
     missing = [st for st in before if st not in na and not (s / STAGE_FILES[st]).exists()]

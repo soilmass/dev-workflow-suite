@@ -21,6 +21,8 @@ broken; sed -i 's/^profile: standard/profile: huge/' "$tmp/r/.suite/record.md"; 
 broken; printf '| OUT-1 | dup | x | y |\n' >> "$tmp/r/.suite/plan.md"; expect_fail "duplicate ID (REC-03)"
 broken; printf '\n| THR-1 | ingress | flood | |\n' >> "$tmp/r/.suite/plan.md"; expect_fail "threat without response (REC-09)"
 broken; rm "$tmp/r/.suite/shape.md"; expect_fail "missing stage file (REC-02)"
+broken; sed -i 's/^version: 1/version: 2/' "$tmp/r/.suite/record.md"; expect_fail "new version without a passed learn (REC-13)"
+broken; sed -i 's/| 2026-11-18 | 1 | plan |/| 2026-11-18 | 3 | plan |/' "$tmp/r/.suite/record.md"; expect_fail "gate row ahead of version (REC-13)"
 broken; sed -i 's/| OUT-1 |$/| OUT-5 |/' "$tmp/r/.suite/plan.md"; expect_fail "orphan DOD (REC-11)"
 broken; printf '\n| ITEM-1 | scaffold | maybe |\n' >> "$tmp/r/.suite/plan.md"; expect_fail "item without status (REC-12)"
 
@@ -28,6 +30,7 @@ broken; printf '\n| ITEM-1 | scaffold | maybe |\n' >> "$tmp/r/.suite/plan.md"; e
 mk() {  # a repo copy with one skill folder named $1 built from the contract
   rm -rf "$tmp/s"; mkdir -p "$tmp/s/standards" "$tmp/s/plugins/p/skills/$1/references/library" "$tmp/s/evals/$1"
   cp "$here/standards/contracts.yaml" "$tmp/s/standards/"
+  mkdir -p "$tmp/s/.suite"; cp "$here/.suite/shape.md" "$tmp/s/.suite/"
   cat > "$tmp/s/plugins/p/skills/$1/SKILL.md" <<EOF
 ---
 name: adopt
@@ -70,6 +73,9 @@ mk adopt; sed -i 's#^`.suite/record.md`, `.suite/rules.md`#`.suite/rules.md`, `.
 mk adopt; printf 'Write the Project File.\n' >> "$tmp/s/plugins/p/skills/adopt/SKILL.md"; if $cs >/dev/null; then fail "avoided term passed (SKL-19)"; fi
 mk adopt; sed -i 's/serves: \[OUT-4\]/serves: []/; s/serves: \[OUT-4\]/serves: []/' "$tmp/s/standards/contracts.yaml"; if $cs >/dev/null; then fail "unserved outcome passed (SKL-17)"; fi
 mk adopt; sed -i 's/enforced_by: \[SKL-19\]/enforced_by: [SKL-99]/' "$tmp/s/standards/contracts.yaml"; if $cs >/dev/null; then fail "principle enforced by unknown rule passed (SKL-18)"; fi
+mk adopt; sed -i 's/      SHAPE-G3: {small:/      SHAPE-G9: {small:/' "$tmp/s/standards/contracts.yaml"; if $cs >/dev/null; then fail "variant for unknown gate passed (SKL-20)"; fi
+mk adopt; sed -i 's/record: \[OUT,/record: [ADOPT, OUT,/' "$tmp/s/standards/contracts.yaml"; if $cs >/dev/null; then fail "shared ID prefix passed (SKL-21)"; fi
+mk adopt; rm "$tmp/s/.suite/shape.md"; if $cs >/dev/null; then fail "suite record without outcomes passed (SKL-17)"; fi
 mk adopt; rm "$tmp/s/evals/adopt/evals.md"; if $cs >/dev/null; then fail "missing evals passed (SKL-14)"; fi
 mk adopt; mkdir -p "$tmp/s/plugins/p/skills/adopt-or-build"; printf -- '---\nname: adopt-or-build\ndescription: x\n---\n' > "$tmp/s/plugins/p/skills/adopt-or-build/SKILL.md"
 if $cs >/dev/null; then fail "legacy skill kept after its replacement passed (SKL-15)"; fi
