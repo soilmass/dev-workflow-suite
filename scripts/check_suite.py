@@ -58,6 +58,29 @@ def check_contracts(c, results):
         for i in ids:
             if not re.fullmatch(re.escape(prefix) + r"[GMN]\d+", i):
                 results.append(("FAIL", "SKL-12", name, f"rule ID {i} does not follow {prefix}G/M/N<n>"))
+    # SKL-17: every outcome served; every served outcome exists
+    served = {o for k in names.values() for o in k.get("serves", [])}
+    for o in c.get("outcomes", {}):
+        if o not in served:
+            results.append(("FAIL", "SKL-17", "contracts.yaml", f"outcome {o} is served by no skill"))
+    for n, k in names.items():
+        if not k.get("serves"):
+            results.append(("FAIL", "SKL-17", n, "skill serves no outcome"))
+        for o in k.get("serves", []):
+            if o not in c.get("outcomes", {}):
+                results.append(("FAIL", "SKL-17", n, f"serves unknown outcome {o}"))
+    # SKL-18: every principle enforced by rules that exist
+    known = set(c.get("common", {})) | {f"SKL-{i:02d}" for i in range(1, 20)} | {f"REC-{i:02d}" for i in range(1, 13)}
+    for k in names.values():
+        known |= set(k["gate"]) | set(k.get("must", {})) | set(k.get("must_not", {}))
+    for pid, pr in c.get("principles", {}).items():
+        unknown = [r for r in pr["enforced_by"] if r not in known]
+        if unknown:
+            results.append(("FAIL", "SKL-18", pid, f"enforced by unknown rules {unknown}"))
+        elif not pr["enforced_by"] or pr.get("status") != "accepted":
+            results.append(("PENDING", "SKL-18", pid, f"'{pr['name']}' is {pr.get('status')} or has no enforcing rule yet"))
+        else:
+            results.append(("PASS", "SKL-18", pid, f"'{pr['name']}' enforced by {', '.join(pr['enforced_by'])}"))
     if not any(r[0] == "FAIL" for r in results):
         results.append(("PASS", "SKL-12", "contracts.yaml", f"{len(names)} contracts consistent"))
 
@@ -111,6 +134,9 @@ def check_skill(root, name, k, c, results):
     common = [i for i in c.get("common", {}) if not (i == "CORE-M2" and k["kind"] == "tool")]
     cmiss = [i for i in common if i not in rules]
     res(not cmiss, "SKL-16", "Rules cite every common rule" + (f" (missing {cmiss})" if cmiss else ""))
+
+    avoid = [t for t in c.get("avoid", {}) if re.search(r"\b" + re.escape(t) + r"\b", text, re.I if t.islower() else 0)]
+    res(not avoid, "SKL-19", "uses the glossary's terms" + (f" (avoid: {avoid})" if avoid else ""))
 
     lmiss = [m for m in k.get("library", []) if not (d / "references" / "library" / f"{m}.md").is_file()]
     res(not lmiss, "SKL-13", "library modules present in references/library/" + (f" (missing {lmiss})" if lmiss else ""))

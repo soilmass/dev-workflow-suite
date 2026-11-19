@@ -67,6 +67,9 @@ mk adopt; sed -i 's#`docs/decisions/`#`docs/decisions/` and `.suite/plan.md`#' "
 mk adopt; sed -i 's/^## Steps/## How/' "$tmp/s/plugins/p/skills/adopt/SKILL.md"; if $cs >/dev/null; then fail "missing section passed (SKL-06)"; fi
 mk adopt; sed -i 's/ CORE-N1//' "$tmp/s/plugins/p/skills/adopt/SKILL.md"; if $cs >/dev/null; then fail "missing common rule passed (SKL-16)"; fi
 mk adopt; sed -i 's#^`.suite/record.md`, `.suite/rules.md`#`.suite/rules.md`, `.suite/record.md`#' "$tmp/s/plugins/p/skills/adopt/SKILL.md"; if $cs >/dev/null; then fail "record not read first passed (SKL-07)"; fi
+mk adopt; printf 'Write the Project File.\n' >> "$tmp/s/plugins/p/skills/adopt/SKILL.md"; if $cs >/dev/null; then fail "avoided term passed (SKL-19)"; fi
+mk adopt; sed -i 's/serves: \[OUT-4\]/serves: []/; s/serves: \[OUT-4\]/serves: []/' "$tmp/s/standards/contracts.yaml"; if $cs >/dev/null; then fail "unserved outcome passed (SKL-17)"; fi
+mk adopt; sed -i 's/enforced_by: \[SKL-19\]/enforced_by: [SKL-99]/' "$tmp/s/standards/contracts.yaml"; if $cs >/dev/null; then fail "principle enforced by unknown rule passed (SKL-18)"; fi
 mk adopt; rm "$tmp/s/evals/adopt/evals.md"; if $cs >/dev/null; then fail "missing evals passed (SKL-14)"; fi
 mk adopt; mkdir -p "$tmp/s/plugins/p/skills/adopt-or-build"; printf -- '---\nname: adopt-or-build\ndescription: x\n---\n' > "$tmp/s/plugins/p/skills/adopt-or-build/SKILL.md"
 if $cs >/dev/null; then fail "legacy skill kept after its replacement passed (SKL-15)"; fi

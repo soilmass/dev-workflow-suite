@@ -26,6 +26,51 @@ required_sections:
   - "## Exit gate"
   - "## Rules for this skill"
 
+# Why the suite exists: its outcomes (from the Vision Map). Every outcome is
+# served by at least one skill (SKL-17).
+outcomes:
+  OUT-1: Projects meet one shared baseline.
+  OUT-2: Projects reach production-grade health (Scorecard 7.0 or higher).
+  OUT-3: Teams stay on the path instead of bypassing it.
+  OUT-4: Proven open source is adopted before anything is built.
+  OUT-5: Teams outside yours use it.
+
+# The rebuild plan's principles, each enforced by at least one existing rule
+# (SKL-18). A principle still marked proposed reports PENDING, not FAIL.
+principles:
+  P1: {name: "The workflow is the product; skills are its stages", status: accepted, enforced_by: [SKL-12, SKL-15]}
+  P2: {name: "Software only", status: accepted, enforced_by: [SKL-19]}
+  P3: {name: "One record, in the repository", status: accepted, enforced_by: [SKL-07, SKL-08, REC-01, REC-03]}
+  P4: {name: "One gate", status: accepted, enforced_by: [SKL-09, CORE-M2, REC-05, REC-06]}
+  P5: {name: "Standards are a library, not research", status: accepted, enforced_by: [PLAN-M1, PLAN-N1, SKL-13, REC-08]}
+  P6: {name: "Adopt before build, everywhere", status: accepted, enforced_by: [DESIGN-M1, DESIGN-G5, ADOPT-G1]}
+  P7: {name: "Scale to the project", status: accepted, enforced_by: [REC-01]}
+  P8: {name: "Decide, don't drift", status: accepted, enforced_by: [FRAME-N1, PLAN-M3, BUILD-M3, SUITE-M2]}
+  P9: {name: "Machines enforce, prose explains", status: proposed, enforced_by: [BUILD-G2, BUILD-M2]}
+  P10: {name: "Works in both places", status: proposed, enforced_by: []}
+
+# One vocabulary (P3). Contract skills must not use the words under avoid (SKL-19).
+glossary:
+  record: "A project's .suite/ folder and docs/decisions/; the single source of truth."
+  stage: "One of the nine lifecycle steps; each has one stage skill."
+  tool: "A skill any stage can call: suite, adopt, standards, onboard."
+  gate: "The fixed check that ends a stage; its row goes in the gate log."
+  contract: "What a skill reads, writes, gates and must do; in standards/contracts.yaml."
+  rule: "One requirement with an ID, one UPPERCASE keyword, a check and a source."
+  library: "The versioned set of rules, in modules, that projects select from."
+  profile: "small, standard or critical; sets how much each stage asks."
+  decision record: "A MADR file in docs/decisions/; every decision, any stage."
+  waiver: "A decision record accepting a failed SHOULD rule on named work."
+  accepted risk: "A decision record accepting a threat or finding, quoting the user."
+  parking lot: "Ideas captured for later, not acted on."
+avoid:
+  Project File: record
+  Vision Map: shape (the stage) or shape.md
+  concept brief: frame.md
+  phase: stage
+  any field: (software only)
+  Candidate: proposed
+
 # Rules every contract skill cites in its "Rules for this skill" section (SKL-16).
 common:
   CORE-M1: Read the record and run the record validator before any other step.
@@ -50,6 +95,7 @@ legacy:
 skills:
 
   suite:
+    serves: [OUT-3, OUT-5]
     kind: tool
     purpose: Starts a project record, reports where a project stands, and names the one skill to run next.
     reads: [".suite/record.md", ".suite/"]
@@ -66,6 +112,7 @@ skills:
       SUITE-N2: Never change the stage field except at init or after a passed gate.
 
   frame:
+    serves: [OUT-3]
     kind: stage
     next: shape
     purpose: Tests a software idea with the user and records the problem, users, riskiest assumption and cheapest test.
@@ -86,6 +133,7 @@ skills:
       FRAME-N2: Never ask hypothetical "would you use it" questions.
 
   shape:
+    serves: [OUT-3]
     kind: stage
     next: plan
     purpose: Turns the frame into measurable outcomes, users and roles, scenarios, quality scenarios and needs with acceptance checks.
@@ -105,6 +153,7 @@ skills:
       SHAPE-N1: Never name a product or technology in a need unless a constraint requires it.
 
   plan:
+    serves: [OUT-1]
     kind: stage
     next: design
     purpose: Writes the charter and definition of done, and selects the project's rules from the standards library.
@@ -124,6 +173,7 @@ skills:
       PLAN-N1: Never edit a library rule's text, keyword or check inside a project.
 
   design:
+    serves: [OUT-4]
     kind: stage
     next: build
     purpose: Records significant decisions, draws C4 context and container diagrams, sets the test strategy and threat-models the design.
@@ -143,6 +193,7 @@ skills:
       DESIGN-N1: Never write application code or a build checklist.
 
   build:
+    serves: [OUT-1, OUT-2]
     kind: stage
     next: verify
     purpose: Builds the checklist one pull-request-sized item at a time, wiring the project's rules into CI, with a gate after each item.
@@ -163,6 +214,7 @@ skills:
       BUILD-N2: Never waive a MUST rule.
 
   verify:
+    serves: [OUT-1, OUT-2]
     kind: stage
     next: release
     purpose: Reviews the built system for security and test quality against the design, the threat model and the application security module.
@@ -182,6 +234,7 @@ skills:
       VERIFY-N2: Never scan or test systems the user has not named as theirs.
 
   release:
+    serves: [OUT-2]
     kind: stage
     next: operate
     purpose: Versions, documents, signs, attests and ships a release, and deploys it by GitOps.
@@ -194,12 +247,14 @@ skills:
       RELEASE-G3: The artefact signature and provenance verify.
       RELEASE-G4: User docs (README, API docs) match the release.
       RELEASE-G5: Deployed config references the release by version or digest.
+      RELEASE-G6: An SBOM ships with the release wherever rules.md requires one.
     must:
       RELEASE-M1: Verify signature and provenance with the tools before reporting success.
     must_not:
       RELEASE-N1: Never publish, tag or deploy without the user's go-ahead in this conversation.
 
   operate:
+    serves: [OUT-2]
     kind: stage
     next: learn
     purpose: Sets SLOs, alerts, and the incident and vulnerability routines for a running system.
@@ -217,6 +272,7 @@ skills:
       OPERATE-N1: Never change production systems without the user's go-ahead in this conversation.
 
   learn:
+    serves: [OUT-3]
     kind: stage
     next: plan
     purpose: Runs the retro, sends standards gaps to the library, and names the next version or closes the project.
@@ -233,6 +289,7 @@ skills:
       LEARN-N1: Never blame a person in a retro.
 
   adopt:
+    serves: [OUT-4]
     kind: tool
     purpose: Decides whether to adopt an open source component or build, and records the decision.
     reads: [".suite/record.md", ".suite/rules.md"]
@@ -249,6 +306,7 @@ skills:
       ADOPT-N2: Never install or run a candidate outside a sandbox.
 
   standards:
+    serves: [OUT-1]
     kind: tool
     purpose: Shows and explains library rules, and lets maintainers add or change them through a change request.
     reads: ["standards/library/"]
@@ -263,6 +321,7 @@ skills:
       STANDARDS-N1: Never change the library from inside a project's work.
 
   onboard:
+    serves: [OUT-1, OUT-5]
     kind: tool
     purpose: Assesses an existing repository and writes its first record, placing it at the right stage.
     reads: ["."]
