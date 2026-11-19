@@ -2,8 +2,10 @@
 # SPDX-License-Identifier: Apache-2.0
 # Installs the check tools at exact versions, verifying the gitleaks download.
 set -euo pipefail
-pip install --quiet "skills-ref==0.1.1"
-npm install --global "@anthropic-ai/claude-code@2.1.328"
+here="$(cd "$(dirname "$0")" && pwd)"
+pip install --quiet --require-hashes -r "$here/requirements.txt"
+npm ci --prefix "$here/tools" --no-audit --no-fund
+echo "$here/tools/node_modules/.bin" >> "${GITHUB_PATH:-/dev/null}"
 GL_VERSION=8.28.0
 GL_SHA256=a65b5253807a68ac0cafa4414031fd740aeb55f54fb7e55f386acb52e6a840eb
 tmp="$(mktemp -d)"

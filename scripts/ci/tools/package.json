@@ -1,0 +1,8 @@
+{
+  "name": "dev-workflow-suite-ci-tools",
+  "private": true,
+  "description": "Pinned CI tools for the Dev Workflow Suite. Installed with npm ci.",
+  "dependencies": {
+    "@anthropic-ai/claude-code": "2.1.328"
+  }
+}
