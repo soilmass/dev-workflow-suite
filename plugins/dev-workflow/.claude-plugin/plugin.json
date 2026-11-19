@@ -1,8 +1,10 @@
 {
   "name": "dev-workflow",
-  "description": "Routes software projects through the Dev Workflow Suite and writes their baseline standards into a Project File.",
-  "version": "0.1.0",
-  "author": { "name": "soilmass" },
+  "description": "The Dev Workflow Suite: routes a software project through idea, vision, standards, design and build, with baseline standards and adopt-or-build decisions.",
+  "version": "0.2.0",
+  "author": {
+    "name": "soilmass"
+  },
   "license": "Apache-2.0",
   "repository": "https://github.com/soilmass/dev-workflow-suite"
 }

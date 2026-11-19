@@ -1,6 +1,8 @@
 {
   "name": "dev-workflow-suite",
-  "owner": { "name": "soilmass" },
+  "owner": {
+    "name": "soilmass"
+  },
   "metadata": {
     "description": "A standard software development workflow for Claude, built on CNCF tooling, open standards and open source practice."
   },
@@ -8,7 +10,7 @@
     {
       "name": "dev-workflow",
       "source": "./plugins/dev-workflow",
-      "description": "Suite skills: suite-start routing and the standards-baseline rules (wave 1)."
+      "description": "Suite skills: suite-start, grill-my-idea, envision-phase, explore-phase, design-phase, build-phase, standards-baseline, adopt-or-build."
     }
   ]
 }

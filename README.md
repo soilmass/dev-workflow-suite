@@ -2,10 +2,20 @@
 
 A set of Claude skills that takes a software project from idea to running system through one standard workflow, built on CNCF tooling, open standards and open source practice. Every skill shares one standard: a Project File with a charter, a standards register of BCP 14 rules, and a gate that runs after every piece of work.
 
-This is wave 1. It ships two skills in the `dev-workflow` plugin:
+This release (0.2.0) ships eight skills in the `dev-workflow` plugin:
 
-- **suite-start** finds where a project stands and names the one suite skill to run next.
-- **standards-baseline** writes repository security (OpenSSF OSPS Baseline), supply chain (SLSA, Sigstore, CISA SBOM), delivery (OpenGitOps), observability (OpenTelemetry), policy-as-code, licensing and agent-safety (OWASP agentic top 10) rules into a project's Project File.
+| Skill | What it does |
+| --- | --- |
+| **suite-start** | Finds where a project stands and names the one suite skill to run next. |
+| **grill-my-idea** | Interviews you about an idea, one question at a time, and writes a cited concept brief. |
+| **envision-phase** | Maps everything the idea needs to be robust into a Vision Map. |
+| **explore-phase** | Researches the field's standards and writes the charter and rules into a Project File. |
+| **standards-baseline** | Adds repository security (OpenSSF OSPS Baseline), supply chain (SLSA, Sigstore, CISA SBOM), delivery (OpenGitOps), observability (OpenTelemetry), policy, licensing and agent-safety (OWASP agentic top 10) rules to the Project File. |
+| **design-phase** | Writes decision records (MADR), C4 context and container diagrams and a four-question threat model before code. |
+| **adopt-or-build** | Decides whether to adopt an open source component or build, using the OpenSSF guide for evaluating open source. |
+| **build-phase** | Builds one checklist item at a time, with a gate after each that enforces the Project File. |
+
+The usual order is grill-my-idea, envision-phase, explore-phase (with standards-baseline), design-phase (with adopt-or-build), build-phase. Coming next: ci-pipeline and security-review.
 
 ## Install
 
@@ -22,7 +32,7 @@ Then run `/dev-workflow:suite-start` in your project.
 
 - **Runs:** nothing. The plugin contains only skills (markdown). It has no hooks, MCP servers, scripts or package installs.
 - **Sends:** nothing. Neither skill sends data anywhere.
-- **Fetches:** nothing. The skills read files in your conversation and your project's repository, and write the Project File you ask for.
+- **Fetches:** nothing by itself. Some skills ask Claude to look up public information with its own web tools: grill-my-idea and explore-phase research sources, and adopt-or-build reads public package data (for example deps.dev, osv.dev and the OpenSSF Scorecard API). Skills read files in your conversation and repository and write the suite files you ask for under `.suite/` and `docs/decisions/`.
 
 The `scripts/` folder at the repository root holds maintainer tools (`sync_standard.py`, `check_skills.py`, `validate_project_file.py`). They are not part of the installed plugin; they read and write local files only.
 
@@ -49,8 +59,7 @@ The suite never needs to push, publish or delete on its own. You can make that a
 .claude-plugin/marketplace.json   marketplace manifest
 plugins/dev-workflow/             the installable plugin
   .claude-plugin/plugin.json
-  skills/suite-start/
-  skills/standards-baseline/
+  skills/<skill>/                 one folder per skill
 shared/standard.md                the shared standard (single source)
 shared/consumers.txt              skills that embed it
 scripts/                          maintainer tools
