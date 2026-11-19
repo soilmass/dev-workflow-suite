@@ -1,0 +1,12 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: pingboard}
+spec:
+  replicas: 2
+  selector: {matchLabels: {app: pingboard}}
+  template:
+    metadata: {labels: {app: pingboard}}
+    spec:
+      containers:
+        - name: pingboard
+          image: ghcr.io/example/pingboard:latest
