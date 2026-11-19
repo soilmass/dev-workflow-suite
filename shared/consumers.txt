@@ -1,2 +1,4 @@
 # Skills that embed shared/standard.md, one path per line (relative to repo root).
 plugins/dev-workflow/skills/standards-baseline
+plugins/dev-workflow/skills/explore-phase
+plugins/dev-workflow/skills/build-phase
