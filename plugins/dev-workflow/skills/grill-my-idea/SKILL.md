@@ -1,6 +1,10 @@
 ---
-name: "grill-my-idea"
-description: "Interviews the user about an idea in any field, one question at a time, checks live where the field agrees, and ends with a cited brief of risks, assumptions and edge cases. Use when asked to grill or pressure-test an idea."
+name: grill-my-idea
+description: Interviews the user about an idea in any field, one question at a time, checks live where the field agrees, and ends with a cited brief of risks, assumptions and edge cases. Use when asked to grill or pressure-test an idea.
+license: CC-BY-4.0
+metadata:
+  suite: dev-workflow
+  wave: "2a"
 ---
 
 # Grill my idea

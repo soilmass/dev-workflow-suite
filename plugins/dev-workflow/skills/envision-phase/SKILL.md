@@ -1,6 +1,10 @@
 ---
-name: "envision-phase"
-description: "Turns a confirmed idea in any field into a Vision Map, a complete, vision-traced map of what the thing needs to be robust. Use when a confirmed idea needs its full depth mapped, after grill-my-idea and before explore-phase."
+name: envision-phase
+description: Turns a confirmed idea in any field into a Vision Map, a complete, vision-traced map of what the thing needs to be robust. Use when a confirmed idea needs its full depth mapped, after grill-my-idea and before explore-phase.
+license: CC-BY-4.0
+metadata:
+  suite: dev-workflow
+  wave: "2a"
 ---
 
 # Envision Phase

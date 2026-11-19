@@ -1,6 +1,10 @@
 ---
-name: "build-phase"
-description: "Builds a project one checklist item at a time against its Project File, running a standard gate after each item that enforces the charter, scope and standards register. Use when building after explore-phase, when continuing a project build, or when asked to keep work on spec."
+name: build-phase
+description: Builds a project one checklist item at a time against its Project File, running a standard gate after each item that enforces the charter, scope and standards register. Use when building after explore-phase, when continuing a project build, or when asked to keep work on spec.
+license: CC-BY-4.0
+metadata:
+  suite: dev-workflow
+  wave: "2a"
 ---
 
 # Build Phase

@@ -1,6 +1,10 @@
 ---
-name: "explore-phase"
-description: "Researches what experts and the industry agree on for a project's topic and records it as enforceable standards plus a charter in a Project File. Use when starting or re-scoping a project, or when asked for best practices or industry standards to build against."
+name: explore-phase
+description: Researches what experts and the industry agree on for a project's topic and records it as enforceable standards plus a charter in a Project File. Use when starting or re-scoping a project, or when asked for best practices or industry standards to build against.
+license: CC-BY-4.0
+metadata:
+  suite: dev-workflow
+  wave: "2a"
 ---
 
 # Explore Phase

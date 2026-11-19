@@ -1,7 +1,7 @@
 ---
 name: suite-start
 description: Routes a software project request to the one Dev Workflow Suite skill that should handle it next, based on the project files that already exist. Use when starting or resuming work with the suite, or when unsure which suite skill comes next.
-license: Apache-2.0
+license: CC-BY-4.0
 metadata:
   suite: dev-workflow
   wave: "1"

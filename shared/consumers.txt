@@ -2,3 +2,4 @@
 plugins/dev-workflow/skills/standards-baseline
 plugins/dev-workflow/skills/explore-phase
 plugins/dev-workflow/skills/build-phase
+plugins/dev-workflow/skills/design-phase
