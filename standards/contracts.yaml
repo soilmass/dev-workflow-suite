@@ -1,0 +1,269 @@
+# SPDX-License-Identifier: CC-BY-4.0
+# Skill contracts for the Dev Workflow Suite (rebuild, contract version 1).
+# scripts/check_suite.py checks every skill folder against this file.
+# Edit this file through a pull request; a contract change is a change request.
+
+contract_version: "1"
+
+stages: [frame, shape, plan, design, build, verify, release, operate, learn]
+profiles: [small, standard, critical]
+library_modules:
+  - repo-security
+  - ci
+  - supply-chain
+  - delivery
+  - observability
+  - policy
+  - licensing
+  - appsec
+  - agent-safety
+
+# Sections every contract skill's SKILL.md has, in this order.
+required_sections:
+  - "## Reads"
+  - "## Writes"
+  - "## Steps"
+  - "## Exit gate"
+  - "## Rules for this skill"
+
+# Skills from 0.x that keep working until their replacement ships.
+# check_suite.py skips contract checks for these, and fails if a legacy
+# skill is still present after its replacement exists.
+legacy:
+  suite-start: suite
+  grill-my-idea: frame
+  envision-phase: shape
+  explore-phase: plan
+  standards-baseline: plan
+  design-phase: design
+  adopt-or-build: adopt
+  build-phase: build
+
+skills:
+
+  suite:
+    kind: tool
+    purpose: Starts a project record, reports where a project stands, and names the one skill to run next.
+    reads: [".suite/record.md", ".suite/"]
+    writes: [".suite/record.md"]
+    library: []
+    gate:
+      SUITE-G1: The record header has name, profile, stage and library version.
+      SUITE-G2: The reply names exactly one next skill, or none with a reason.
+    must:
+      SUITE-M1: Run the record validator before routing and report its failures.
+      SUITE-M2: Set the profile only from the user's answer, with a recommended default.
+    must_not:
+      SUITE-N1: Never do the routed skill's work.
+      SUITE-N2: Never change the stage field except at init or after a passed gate.
+
+  frame:
+    kind: stage
+    next: shape
+    purpose: Tests a software idea with the user and records the problem, users, riskiest assumption and cheapest test.
+    reads: [".suite/record.md"]
+    writes: [".suite/frame.md", "append: .suite/record.md"]
+    library: []
+    gate:
+      FRAME-G1: A job statement names who has the problem and when, without naming the solution.
+      FRAME-G2: The riskiest assumption is named with its evidence level.
+      FRAME-G3: A cheapest next test has a pass or fail bar.
+      FRAME-G4: The user confirmed the frame in their own words.
+    must:
+      FRAME-M1: Ask one question per turn, each with a recommended answer.
+      FRAME-M2: Look up what exists and what the field agrees on instead of asking the user.
+      FRAME-M3: Cite every claim about the field to a source that was read.
+    must_not:
+      FRAME-N1: Never record a decision the user did not make in their own words.
+      FRAME-N2: Never ask hypothetical "would you use it" questions.
+
+  shape:
+    kind: stage
+    next: plan
+    purpose: Turns the frame into measurable outcomes, users and roles, scenarios, quality scenarios and needs with acceptance checks.
+    reads: [".suite/record.md", ".suite/frame.md"]
+    writes: [".suite/shape.md", "append: .suite/record.md"]
+    library: []
+    gate:
+      SHAPE-G1: Every outcome (OUT) has a measure and a target.
+      SHAPE-G2: Every need (NEED) has one behaviour, an acceptance check and a trace to an outcome.
+      SHAPE-G3: Every relevant ISO 25010 quality has a scenario (QUAL) with a measurable response.
+      SHAPE-G4: Failure, misuse and overload scenarios exist.
+      SHAPE-G5: The record validator passes on shape.md.
+    must:
+      SHAPE-M1: Mark every drafted item proposed until the user accepts it.
+      SHAPE-M2: Split any need that holds two behaviours.
+    must_not:
+      SHAPE-N1: Never name a product or technology in a need unless a constraint requires it.
+
+  plan:
+    kind: stage
+    next: design
+    purpose: Writes the charter and definition of done, and selects the project's rules from the standards library.
+    reads: [".suite/record.md", ".suite/frame.md", ".suite/shape.md"]
+    writes: [".suite/plan.md", ".suite/rules.md", "docs/decisions/", "append: .suite/record.md"]
+    library: [repo-security, ci, supply-chain, delivery, observability, policy, licensing, appsec, agent-safety]
+    gate:
+      PLAN-G1: Every DoD item is checkable and traces to an outcome.
+      PLAN-G2: rules.md lists the library version and every selected rule with its ID unchanged.
+      PLAN-G3: Every library rule left out has a reason.
+      PLAN-G4: No proposed decision affects a DoD item.
+    must:
+      PLAN-M1: Select rules from the library before any research.
+      PLAN-M2: Research only gaps the library does not cover, and send each gap to the standards tool.
+      PLAN-M3: Log each contested choice as a proposed decision record with a recommended default.
+    must_not:
+      PLAN-N1: Never edit a library rule's text, keyword or check inside a project.
+
+  design:
+    kind: stage
+    next: build
+    purpose: Records significant decisions, draws C4 context and container diagrams, sets the test strategy and threat-models the design.
+    reads: [".suite/record.md", ".suite/shape.md", ".suite/plan.md", ".suite/rules.md"]
+    writes: [".suite/design.md", "docs/decisions/", "append: .suite/record.md"]
+    library: [appsec, agent-safety]
+    gate:
+      DESIGN-G1: Every significant decision has an accepted MADR record.
+      DESIGN-G2: Context and container diagrams exist and name every external system.
+      DESIGN-G3: Every threat (THR) has one response, and every accepted risk quotes the user.
+      DESIGN-G4: A test strategy names the test levels and what each covers.
+      DESIGN-G5: Every new dependency has an adopt record.
+    must:
+      DESIGN-M1: Send every new dependency to the adopt tool.
+      DESIGN-M2: Supersede an accepted decision with a new record instead of editing it.
+    must_not:
+      DESIGN-N1: Never write application code or a build checklist.
+
+  build:
+    kind: stage
+    next: verify
+    purpose: Builds the checklist one pull-request-sized item at a time, wiring the project's rules into CI, with a gate after each item.
+    reads: [".suite/record.md", ".suite/plan.md", ".suite/rules.md", ".suite/design.md", "docs/decisions/"]
+    writes: [".suite/build.md", "append: .suite/record.md"]
+    library: [ci, repo-security, supply-chain, licensing]
+    gate:
+      BUILD-G1: Every checklist item (ITEM) has a passed gate row.
+      BUILD-G2: Every machine-checkable rule in rules.md runs in CI.
+      BUILD-G3: CI is green on the main branch.
+      BUILD-G4: Every failed SHOULD rule has a waiver decision record.
+    must:
+      BUILD-M1: Work one item per step and run the gate after it.
+      BUILD-M2: Read rule results from CI output, not from the skill's own judgement.
+      BUILD-M3: Put out-of-scope ideas in the parking lot.
+    must_not:
+      BUILD-N1: Never tick an item without a passed gate.
+      BUILD-N2: Never waive a MUST rule.
+
+  verify:
+    kind: stage
+    next: release
+    purpose: Reviews the built system for security and test quality against the design, the threat model and the application security module.
+    reads: [".suite/record.md", ".suite/rules.md", ".suite/design.md", ".suite/build.md"]
+    writes: [".suite/verify.md", "append: .suite/record.md"]
+    library: [appsec, agent-safety]
+    gate:
+      VERIFY-G1: Every finding (FIND) has a CWE ID and a severity.
+      VERIFY-G2: Every threat response from design is confirmed implemented or raised as a finding.
+      VERIFY-G3: Every critical or high finding is fixed or has an accepted risk decision.
+      VERIFY-G4: The test strategy's levels all run in CI.
+    must:
+      VERIFY-M1: Cite ASVS requirements by ID only.
+      VERIFY-M2: Mark a finding resolved only with evidence (a test, a diff or a CI result).
+    must_not:
+      VERIFY-N1: Never copy ASVS requirement text into suite files.
+      VERIFY-N2: Never scan or test systems the user has not named as theirs.
+
+  release:
+    kind: stage
+    next: operate
+    purpose: Versions, documents, signs, attests and ships a release, and deploys it by GitOps.
+    reads: [".suite/record.md", ".suite/rules.md", ".suite/verify.md"]
+    writes: [".suite/releases/", "append: .suite/record.md"]
+    library: [supply-chain, delivery, licensing]
+    gate:
+      RELEASE-G1: The version follows semantic versioning and is unique.
+      RELEASE-G2: Release notes list functional and security changes.
+      RELEASE-G3: The artefact signature and provenance verify.
+      RELEASE-G4: User docs (README, API docs) match the release.
+      RELEASE-G5: Deployed config references the release by version or digest.
+    must:
+      RELEASE-M1: Verify signature and provenance with the tools before reporting success.
+    must_not:
+      RELEASE-N1: Never publish, tag or deploy without the user's go-ahead in this conversation.
+
+  operate:
+    kind: stage
+    next: learn
+    purpose: Sets SLOs, alerts, and the incident and vulnerability routines for a running system.
+    reads: [".suite/record.md", ".suite/shape.md", ".suite/releases/"]
+    writes: [".suite/operations/", "append: .suite/record.md"]
+    library: [observability, supply-chain]
+    gate:
+      OPERATE-G1: Every user-facing quality scenario has an SLO.
+      OPERATE-G2: Every SLO has an alert and a runbook.
+      OPERATE-G3: A vulnerability routine names how advisories reach the team and the fix time per severity.
+      OPERATE-G4: Every incident (INC) has a report with a cause and an action.
+    must:
+      OPERATE-M1: Emit telemetry through OpenTelemetry.
+    must_not:
+      OPERATE-N1: Never change production systems without the user's go-ahead in this conversation.
+
+  learn:
+    kind: stage
+    next: plan
+    purpose: Runs the retro, sends standards gaps to the library, and names the next version or closes the project.
+    reads: [".suite/record.md", ".suite/"]
+    writes: [".suite/retros/", "append: .suite/record.md"]
+    library: []
+    gate:
+      LEARN-G1: The retro compares outcomes against their targets.
+      LEARN-G2: Every standards gap is filed for the library.
+      LEARN-G3: The next version has a named purpose, or the project is closed.
+    must:
+      LEARN-M1: Start a new version only from a named purpose.
+    must_not:
+      LEARN-N1: Never blame a person in a retro.
+
+  adopt:
+    kind: tool
+    purpose: Decides whether to adopt an open source component or build, and records the decision.
+    reads: [".suite/record.md", ".suite/rules.md"]
+    writes: ["docs/decisions/"]
+    library: [licensing, supply-chain]
+    gate:
+      ADOPT-G1: Necessity is answered before any candidate.
+      ADOPT-G2: Every candidate has its SPDX licence, compatibility and known vulnerabilities for the exact version.
+      ADOPT-G3: The decision record lists every option and quotes the user's choice.
+    must:
+      ADOPT-M1: Write "not found" for any fact that could not be looked up.
+    must_not:
+      ADOPT-N1: Never decide on a Scorecard score alone.
+      ADOPT-N2: Never install or run a candidate outside a sandbox.
+
+  standards:
+    kind: tool
+    purpose: Shows and explains library rules, and lets maintainers add or change them through a change request.
+    reads: ["standards/library/"]
+    writes: ["standards/library/"]
+    library: [repo-security, ci, supply-chain, delivery, observability, policy, licensing, appsec, agent-safety]
+    gate:
+      STANDARDS-G1: Every new or changed rule has one keyword, one behaviour, a check and a dated source.
+      STANDARDS-G2: The library version is raised and the change is logged.
+    must:
+      STANDARDS-M1: Keep a removed rule's ID retired, never reused.
+    must_not:
+      STANDARDS-N1: Never change the library from inside a project's work.
+
+  onboard:
+    kind: tool
+    purpose: Assesses an existing repository and writes its first record, placing it at the right stage.
+    reads: ["."]
+    writes: [".suite/record.md", ".suite/rules.md"]
+    library: [repo-security, ci, supply-chain, licensing]
+    gate:
+      ONBOARD-G1: The record header names the stage the evidence supports.
+      ONBOARD-G2: Every selected rule shows its current pass or fail.
+    must:
+      ONBOARD-M1: Base the stage on files and CI evidence, not on the user's description alone.
+    must_not:
+      ONBOARD-N1: Never change the repository's code or settings.

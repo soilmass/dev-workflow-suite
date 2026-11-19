@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Shows the enforcement tools catch what they claim to: each broken copy must fail.
+set -euo pipefail
+here="$(cd "$(dirname "$0")/.." && pwd)"
+tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
+fail() { echo "FAIL: $1"; exit 1; }
+vr="python3 -I $here/scripts/validate_record.py"
+
+# --- record validator ---
+$vr "$here/tests/fixtures/record-valid" >/dev/null || fail "valid record rejected"
+
+broken() { rm -rf "$tmp/r"; cp -r "$here/tests/fixtures/record-valid" "$tmp/r"; }
+expect_fail() { if $vr "$tmp/r" >/dev/null; then fail "$1 passed the validator"; fi; }
+
+broken; sed -i 's/ OUT-1 |$/ OUT-7 |/' "$tmp/r/.suite/shape.md"; expect_fail "orphan NEED (REC-04)"
+broken; sed -i 's/^stage: design/stage: build/' "$tmp/r/.suite/record.md"; expect_fail "wrong stage (REC-06)"
+broken; sed -i 's/MUST block/must block/' "$tmp/r/.suite/rules.md"; expect_fail "lowercase keyword (REC-08)"
+broken; sed -i 's/^status: accepted/status: done/' "$tmp/r/docs/decisions/0001-use-postgresql.md"; expect_fail "bad decision status (REC-07)"
+broken; sed -i 's/^profile: standard/profile: huge/' "$tmp/r/.suite/record.md"; expect_fail "bad profile (REC-01)"
+broken; printf '| OUT-1 | dup | x | y |\n' >> "$tmp/r/.suite/plan.md"; expect_fail "duplicate ID (REC-03)"
+broken; printf '\n| THR-1 | ingress | flood | |\n' >> "$tmp/r/.suite/plan.md"; expect_fail "threat without response (REC-09)"
+broken; rm "$tmp/r/.suite/shape.md"; expect_fail "missing stage file (REC-02)"
+
+# --- skill checker ---
+mk() {  # a repo copy with one skill folder named $1 built from the contract
+  rm -rf "$tmp/s"; mkdir -p "$tmp/s/standards" "$tmp/s/plugins/p/skills/$1/references/library" "$tmp/s/evals/$1"
+  cp "$here/standards/contracts.yaml" "$tmp/s/standards/"
+  cat > "$tmp/s/plugins/p/skills/$1/SKILL.md" <<EOF
+---
+name: adopt
+description: Decides adopt or build. Use when adding a dependency.
+license: CC-BY-4.0
+metadata:
+  contract: "1"
+  stage: tool
+---
+# Adopt
+
+## Reads
+\`.suite/record.md\`, \`.suite/rules.md\`
+
+## Writes
+\`docs/decisions/\`
+
+## Steps
+1. Do it.
+
+## Exit gate
+ADOPT-G1 ADOPT-G2 ADOPT-G3
+
+## Rules for this skill
+ADOPT-M1 ADOPT-N1 ADOPT-N2
+
+<!-- shared-standard:begin -->
+<!-- shared-standard:end -->
+EOF
+  touch "$tmp/s/plugins/p/skills/$1/references/library/licensing.md" "$tmp/s/plugins/p/skills/$1/references/library/supply-chain.md"
+  printf '| C1 | a |\n| C2 | b |\n| C3 | c |\n| I1 | d |\n' > "$tmp/s/evals/$1/evals.md"
+}
+cs="python3 -I $here/scripts/check_suite.py --root $tmp/s"
+mk adopt; $cs >/dev/null || { $cs | grep FAIL; fail "conforming skill rejected"; }
+mk adopt; sed -i 's/ADOPT-N2//' "$tmp/s/plugins/p/skills/adopt/SKILL.md"; if $cs >/dev/null; then fail "missing must-not ID passed (SKL-10)"; fi
+mk adopt; sed -i 's#`docs/decisions/`#`docs/decisions/` and `.suite/plan.md`#' "$tmp/s/plugins/p/skills/adopt/SKILL.md"; if $cs >/dev/null; then fail "writing another stage's file passed (SKL-08)"; fi
+mk adopt; sed -i 's/^## Steps/## How/' "$tmp/s/plugins/p/skills/adopt/SKILL.md"; if $cs >/dev/null; then fail "missing section passed (SKL-06)"; fi
+mk adopt; rm "$tmp/s/evals/adopt/evals.md"; if $cs >/dev/null; then fail "missing evals passed (SKL-14)"; fi
+mk adopt; mkdir -p "$tmp/s/plugins/p/skills/adopt-or-build"; printf -- '---\nname: adopt-or-build\ndescription: x\n---\n' > "$tmp/s/plugins/p/skills/adopt-or-build/SKILL.md"
+if $cs >/dev/null; then fail "legacy skill kept after its replacement passed (SKL-15)"; fi
+mk adopt; mkdir -p "$tmp/s/plugins/p/skills/rogue"; printf -- '---\nname: rogue\ndescription: x\n---\n' > "$tmp/s/plugins/p/skills/rogue/SKILL.md"
+if $cs >/dev/null; then fail "skill without contract passed (SKL-15)"; fi
+
+echo "PASS: record validator and skill checker catch every broken case"

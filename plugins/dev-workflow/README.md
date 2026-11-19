@@ -34,7 +34,7 @@ Then run `/dev-workflow:suite-start` in your project.
 - **Sends:** nothing. Neither skill sends data anywhere.
 - **Fetches:** nothing by itself. Some skills ask Claude to look up public information with its own web tools: grill-my-idea and explore-phase research sources, and adopt-or-build reads public package data (for example deps.dev, osv.dev and the OpenSSF Scorecard API). Skills read files in your conversation and repository and write the suite files you ask for under `.suite/` and `docs/decisions/`.
 
-The `scripts/` folder at the repository root holds maintainer tools (`sync_standard.py`, `check_skills.py`, `validate_project_file.py`). They are not part of the installed plugin; they read and write local files only.
+The `scripts/` folder at the repository root holds maintainer tools (`sync_standard.py`, `check_skills.py`, `check_suite.py`, `validate_record.py`, `validate_project_file.py`). They are not part of the installed plugin; they read and write local files only.
 
 ## Recommended permissions
 
@@ -61,6 +61,8 @@ plugins/dev-workflow/             the installable plugin
   .claude-plugin/plugin.json
   skills/<skill>/                 one folder per skill
 shared/standard.md                the shared standard (single source)
+standards/contracts.yaml          what each skill reads, writes, gates and must do (checked in CI)
+standards/record-format.md        the project record format and REC rules
 shared/consumers.txt              skills that embed it
 scripts/                          maintainer tools
 evals/                            eval prompts and results
